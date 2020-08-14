@@ -1,0 +1,3 @@
+xserver:Depends=xserver-xorg-core (>= 2:1.4)
+xviddriver:Provides=xserver-xorg-video-2
+xinpdriver:Provides=xserver-xorg-input-2
