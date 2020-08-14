@@ -592,14 +592,6 @@ SMI_Probe (DriverPtr drv, int flags)
 }
 #endif
 
-#ifndef XSERVER_LIBPCIACCESS
-  if (xf86GetPciVideoInfo () == NULL)
-    {
-      
-      return (FALSE);
-    }
-#endif
-
   numUsed = xf86MatchPciInstances (SILICONMOTION_NAME, PCI_SMI_VENDOR_ID,
 				   SMIChipsets, SMIPciChipsets, devSections,
 				   numDevSections, drv, &usedChips);
@@ -808,11 +800,7 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, "pScrn is %p(0x%x), pSmi is %p(0x%x), flags
 
   pSmi->PciInfo = xf86GetPciInfoForEntity (pEnt->index);
 
-#ifndef XSERVER_LIBPCIACCESS
- 	chipType = pSmi->PciInfo->chipType;
-#else
 	chipType = PCI_DEV_DEVICE_ID(pSmi->PciInfo);	//caesar modified
-#endif
 
   if (flags & PROBE_DETECT)
     {
@@ -1335,11 +1323,7 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, "pScrn is %p(0x%x), pSmi is %p(0x%x), flags
     }
   else if (pEnt->device->chipID >= 0)
     {
-#ifndef XSERVER_LIBPCIACCESS    
-      pSmi->Chipset = pEnt->device->chipID;
-#else
 	pSmi->Chipset = PCI_DEV_DEVICE_ID(pSmi->PciInfo);	//caesar modified
-#endif
       pScrn->chipset =
 	(char *) xf86TokenToString (SMIChipsets, pSmi->Chipset);
       from = X_CONFIG;
@@ -1362,11 +1346,7 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, "pScrn is %p(0x%x), pSmi is %p(0x%x), flags
     }
   else
     {
-#ifndef XSERVER_LIBPCIACCESS    
-      pSmi->ChipRev = pSmi->PciInfo->chipRev;
-#else
 	pSmi->ChipRev = PCI_DEV_REVISION(pSmi->PciInfo);	//caesar modified
-#endif
     }
   xfree (pEnt);
 
@@ -1391,14 +1371,6 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, "pScrn is %p(0x%x), pSmi is %p(0x%x), flags
 
   xf86DrvMsg (pScrn->scrnIndex, from, "Chipset: \"%s\"\n", pScrn->chipset);
   
-#ifndef XSERVER_LIBPCIACCESS
-  pSmi->PciTag = pciTag (pSmi->PciInfo->bus, pSmi->PciInfo->device,
-			 pSmi->PciInfo->func);
-  pci_tag = pSmi->PciTag;
-  config = pciReadByte(pSmi->PciTag, PCI_CMD_STAT_REG);
-  pciWriteByte(pSmi->PciTag, PCI_CMD_STAT_REG, config | PCI_CMD_MEM_ENABLE);
-  #endif
-
   /*boyod */
 
   pSmi->IsSecondary = FALSE;
@@ -2047,11 +2019,6 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, "  primary pScrn->fbOffset is 0x%x, seconda
       xf86LoaderReqSymLists (shadowSymbols, NULL);
     }
 
-  
-#ifndef XSERVER_LIBPCIACCESS
-  xf86DrvMsg("", X_INFO, "PCI: command is 0x%x, line %d\n", pciReadByte(pSmi->PciTag, PCI_CMD_STAT_REG), __LINE__);
-  read_cmd_reg(4);
-  #endif
   
   return (TRUE);
 }
@@ -3206,19 +3173,11 @@ SMI_UnmapMem (ScrnInfoPtr pScrn)
   SMI_DisableMmio (pScrn);
   
   	if(pSmi->MapBase){
-#ifndef XSERVER_LIBPCIACCESS
-	xf86UnMapVidMem (pScrn->scrnIndex, (pointer) pSmi->MapBase, pSmi->MapSize);
-#else
 	pci_device_unmap_range(pSmi->PciInfo,(pointer)pSmi->MapBase,pSmi->MapSize);
-#endif
   	}
 
   if (pSmi->FBBase){
-  #ifndef XSERVER_LIBPCIACCESS
-      	xf86UnMapVidMem (pScrn->scrnIndex, (pointer) pSmi->FBBase,pSmi->videoRAMBytes);
-  #else
   	pci_device_unmap_range(pSmi->PciInfo,(pointer)pSmi->FBBase,pSmi->videoRAMBytes);
-  #endif
   	}
 	pSmi->IOBase = NULL;
 	//xf86DrvMsg(pScrn->scrnIndex, X_INFO, "SMI_UnmapMem(), pSmi->SR18Value is 0x%x\n", pSmi->SR18Value);
@@ -3506,14 +3465,6 @@ xf86DrvMsg(pScrn->scrnIndex, X_INFO, " Belcon: after SMI_InitVideo\n");
 
   
   
-#ifndef XSERVER_LIBPCIACCESS
-	{
-  volatile CARD8	config;
-  config = pciReadByte(pSmi->PciTag, PCI_CMD_STAT_REG);
-//  pciWriteByte(pSmi->PciTag, PCI_CMD_STAT_REG, config | PCI_CMD_MEM_ENABLE);
-	}
-#endif
-
   
   return (TRUE);
 }

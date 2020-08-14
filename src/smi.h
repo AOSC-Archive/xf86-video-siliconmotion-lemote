@@ -49,9 +49,6 @@ authorization from the XFree86 Project and Silicon Motion.
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-//#ifndef XSERVER_LIBPCIACCESS
-#if  XORG_VERSION_CURRENT <=  XORG_VERSION_NUMERIC(7,1,1,0,0)
-#endif
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86Cursor.h"

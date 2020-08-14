@@ -1504,10 +1504,6 @@ Bool smi_setvideomem_501(int config, ScrnInfoPtr pScrn, SMIPtr pSmi)
 	ENTER_PROC ("smi_setvideomem_501");
 	pSmi->MapSize = 0x200000;
 	/*map MMIO*/
-#ifndef	XSERVER_LIBPCIACCESS	
-	memBase = pSmi->PciInfo->memBase[1];
-	pSmi->MapBase = xf86MapPciMem (pScrn->scrnIndex, VIDMEM_MMIO | VIDMEM_MMIO_32BIT, pSmi->PciTag, memBase, pSmi->MapSize);
-#else
 	memBase = PCI_REGION_BASE(pSmi->PciInfo, 1, REGION_MEM); //caesar modified
 	{
 		void	**result = (void**)&pSmi->MapBase;
@@ -1519,7 +1515,6 @@ Bool smi_setvideomem_501(int config, ScrnInfoPtr pScrn, SMIPtr pSmi)
 		if (err)
 			return (FALSE); 
 	}
-#endif
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: pScrn->display->virtualX is %d\n", pScrn->display->virtualX);
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: map io memory, virtualX is %d, virtualY is %d\n", pScrn->virtualX, pScrn->virtualY);
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: map io memory, lcdWidth is %d, lcdHeight is %d\n", pSmi->lcdWidth, pSmi->lcdHeight);
@@ -1543,11 +1538,7 @@ Bool smi_setvideomem_501(int config, ScrnInfoPtr pScrn, SMIPtr pSmi)
 		return TRUE;
 	}
 */
-#ifndef	XSERVER_LIBPCIACCESS	
-	pScrn->memPhysBase = pSmi->PciInfo->memBase[0];
-#else
 	pScrn->memPhysBase = PCI_REGION_BASE(pSmi->PciInfo, 0, REGION_MEM); //caesar modified
-#endif	
 	value = regRead32(pSmi, DRAM_CTRL);
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: DRAM_CTRL 0x%x\n", value);
 	if ((FIELD_GET(value, DRAM_CTRL, SIZE) == DRAM_CTRL_SIZE_4)) {
@@ -1561,11 +1552,7 @@ Bool smi_setvideomem_501(int config, ScrnInfoPtr pScrn, SMIPtr pSmi)
 	}
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: Unmap io memory\n");
-#ifndef XSERVER_LIBPCIACCESS
-  	xf86UnMapVidMem (pScrn->scrnIndex, (pointer) pSmi->MapBase, pSmi->MapSize);	
-#else
 	pci_device_unmap_range(pSmi->PciInfo,(pointer)pSmi->MapBase,pSmi->MapSize);
-#endif
 	pSmi->MapBase = NULL;
 
 //	pSmi->videoRAMKBytes = 8 * 1024 - FB_RESERVE4USB / 1024;
@@ -1629,19 +1616,12 @@ Bool smi_mapmemory_501(ScrnInfoPtr pScrn, SMIPtr pSmi)
 {
 	vgaHWPtr	hwp;
 	CARD32		memBase;
-#ifndef XSERVER_LIBPCIACCESS
-	memBase = pSmi->PciInfo->memBase[1];
-#else
 	memBase = PCI_REGION_BASE(pSmi->PciInfo,1,REGION_MEM);	//caesar modified
-#endif
 	pSmi->MapSize = 0x200000;
 	if(pSmi->IsSecondary)
 		pSmi->MapSize = 0x150000;	//pci_device_map_range will not map succesfully if the mem base and size are the same
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BDEBUG: LINE(%d), virtualX is %d, virtualY is %d\n", __LINE__, pScrn->virtualX, pScrn->virtualY);
 	/*	map MMIO	*/	
-#ifndef XSERVER_LIBPCIACCESS	
-	pSmi->MapBase = xf86MapPciMem (pScrn->scrnIndex, VIDMEM_MMIO | VIDMEM_MMIO_32BIT, pSmi->PciTag, memBase, pSmi->MapSize);
-#else
 	{
 		//void **result = (void**)&pSmi->MapBase;
 		int err = pci_device_map_range(pSmi->PciInfo,
@@ -1652,7 +1632,6 @@ Bool smi_mapmemory_501(ScrnInfoPtr pScrn, SMIPtr pSmi)
 		if(err)
 			return FALSE;		
 	}
-#endif
 	
 	
 	if (pSmi->MapBase == NULL) {
@@ -1676,11 +1655,7 @@ Bool smi_mapmemory_501(ScrnInfoPtr pScrn, SMIPtr pSmi)
 		return TRUE;
 	}
 */
-#ifndef XSERVER_LIBPCIACCESS
-	pScrn->memPhysBase = pSmi->PciInfo->memBase[0];
-#else
 	pScrn->memPhysBase = PCI_REGION|_BASE(pSmi->PciInfo,0,REGION_MEM);//caesar modified
-#endif
 
 	if (!pSmi->IsSecondary)
 		pSmi->fbMapOffset = 0x0;
@@ -1695,12 +1670,6 @@ Bool smi_mapmemory_501(ScrnInfoPtr pScrn, SMIPtr pSmi)
 	if (pSmi->videoRAMBytes) {
 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "mapmemory: LINE(%d), fbMapOffset is 0x%x\n", __LINE__, pSmi->fbMapOffset);
 /*	MAP MEM	*/
-#ifndef XSERVER_LIBPCIACCESS
-		pSmi->FBBase = xf86MapPciMem(pScrn->scrnIndex,
-			VIDMEM_FRAMEBUFFER, pSmi->PciTag,
-			pScrn->memPhysBase + pSmi->fbMapOffset,
-			pSmi->videoRAMBytes);
-#else
 		{
 		void **result = (void**)	&pSmi->FBBase;
 		int err = pci_device_map_range(pSmi->PciInfo,
@@ -1712,7 +1681,6 @@ Bool smi_mapmemory_501(ScrnInfoPtr pScrn, SMIPtr pSmi)
 		if(err)
 			LEAVE(FALSE);
 		}
-#endif		
 	
 
 		if (pSmi->FBBase == NULL) {

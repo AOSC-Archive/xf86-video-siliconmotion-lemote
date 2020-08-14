@@ -89,11 +89,7 @@ Bool smi_mapmemory(ScrnInfoPtr pScrn, SMIPtr pSmi)
 	vgaHWPtr	hwp;
 	CARD32		memBase;
 	
-#ifndef XSERVER_LIBPCIACCESS
-	memBase = pSmi->PciInfo->memBase[0] + 0x400000;
-#else
 	memBase = PCI_REGION_BASE(pSmi->PciInfo,0,REGION_MEM) + 0x400000;//caesar modified
-#endif
 
 	pSmi->MapSize = 0x10000;
 
@@ -112,11 +108,7 @@ Bool smi_mapmemory(ScrnInfoPtr pScrn, SMIPtr pSmi)
 	pSmi->DataPortBase = pSmi->MapBase;
 	pSmi->DataPortSize = 0x8000;
 
-#ifndef XSERVER_LIBPCIACCESS
-	pScrn->memPhysBase = pSmi->PciInfo->memBase[0];
-#else
 	pScrn->memPhysBase = PCI_REGION_BASE(pSmi->PciInfo,0,REGION_MEM);//caesar modified
-#endif
 
 	pSmi->fbMapOffset = 0x0;
 
